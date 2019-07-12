@@ -708,7 +708,7 @@ FUN WITH FORMS
 .block_recent_activity .snap-media-object {
     margin-bottom: 0.3em;
     font-size: small;
-    width: 310px;
+    width: 100%;
 }
 
 .modtype_hsuforum .snap-media-object > a,
