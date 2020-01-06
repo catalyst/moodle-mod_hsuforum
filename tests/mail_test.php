@@ -130,7 +130,7 @@ class mod_hsuforum_mail_testcase extends advanced_testcase {
         // Retrieve the post which was created by create_discussion.
         $post = $DB->get_record('hsuforum_posts', array('discussion' => $discussion->id));
 
-        return array($discussion, $post);
+        return [$discussion, $post];
     }
 
     /**
@@ -251,6 +251,7 @@ class mod_hsuforum_mail_testcase extends advanced_testcase {
     }
 
     public function test_cron_message_includes_courseid() {
+
         $this->resetAfterTest(true);
 
         // Create a course, with a forum.
@@ -283,11 +284,17 @@ class mod_hsuforum_mail_testcase extends advanced_testcase {
 
         // Reset the message sink for other tests.
         $this->helper->messagesink = $this->redirectMessages();
-        foreach ($events as $event) {
-            if ($event instanceof core\event\notification_sent) {
-                $this->assertEquals($course->id, $event->other['courseid']);
-            }
-        }
+
+        // Notification has been marked as read, so now first event should be a 'notification_viewed' one.
+        $event = reset($events);
+
+        // And next event should be the 'notification_sent' one.
+        $event = $events[1];
+
+        $this->assertInstanceOf('\core\event\notification_sent', $event);
+        $this->assertEquals($author->id, $event->userid);
+        $this->assertEquals($recipient->id, $event->relateduserid);
+        $this->assertEquals($course->id, $event->other['courseid']);
     }
 
     public function test_forced_subscription() {
@@ -1111,7 +1118,9 @@ class mod_hsuforum_mail_testcase extends advanced_testcase {
      * @param array $data provider samples.
      */
     public function test_forum_post_email_templates($data) {
-        global $DB;
+        global $DB, $CFG;
+        // Disabled to avoid adding footer with Mobile Web Services info on emails.
+        $CFG->enablemobilewebservice = 0;
 
         $this->resetAfterTest();
 
